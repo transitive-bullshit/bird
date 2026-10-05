@@ -7,8 +7,8 @@ Requires Node.js 22.12 or newer. X's undocumented API can change without notice.
 ```sh
 npm install -g @fisch0920/bird
 bird whoami
-bird search "from:fisch0920" -n 5
-bird read https://x.com/user/status/1234567890123456789
+bird search "from:transitive_bs" -n 5
+bird read https://x.com/transitive_bs/status/2106223134978498623
 bird help
 ```
 
