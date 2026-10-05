@@ -41,12 +41,16 @@ describe('X request pacing', () => {
     await rm(directory, { recursive: true, force: true });
   });
 
-  async function advanceTo(time: number): Promise<void> {
-    // Yield to real filesystem I/O without advancing fake time (or counting a polling timer).
-    for (let attempt = 0; vi.getTimerCount() === 0 && attempt < 1_000; attempt += 1) {
+  async function waitForIo(predicate: () => boolean): Promise<void> {
+    // vi.waitFor advances fake time, which can race a sleep scheduled after filesystem I/O.
+    for (let attempt = 0; !predicate() && attempt < 1_000; attempt += 1) {
       await yieldIo(1);
     }
-    expect(vi.getTimerCount()).toBeGreaterThan(0);
+    expect(predicate()).toBe(true);
+  }
+
+  async function advanceTo(time: number): Promise<void> {
+    await waitForIo(() => vi.getTimerCount() > 0);
     await vi.advanceTimersByTimeAsync(Math.max(0, time - Date.now()));
   }
 
@@ -109,7 +113,7 @@ describe('X request pacing', () => {
   it('coordinates simultaneous instances through the file lock', async () => {
     const another = new XRequestLimiter(validCookies.authToken, directory);
     const both = Promise.all([limiter.run(SEARCH_URL, request), another.run(SEARCH_URL, request)]);
-    await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(1));
+    await waitForIo(() => request.mock.calls.length === 1);
     await advanceTo(times[0] + 9_999);
     expect(request).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1);
@@ -247,7 +251,7 @@ describe('X request pacing', () => {
     vi.stubGlobal('fetch', fetchMock);
     const client = new TwitterClient({ cookies: validCookies, timeoutMs: 5 });
     const result = client.search('from:example');
-    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitForIo(() => fetchMock.mock.calls.length === 1);
     await advanceTo(firstFetchAt + 9_999);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1);
@@ -299,7 +303,7 @@ describe('X request pacing', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify(page('2'))));
     vi.stubGlobal('fetch', fetchMock);
     const pending = new TwitterClient({ cookies: validCookies }).search('from:example', 2);
-    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitForIo(() => fetchMock.mock.calls.length === 1);
     await advanceTo(firstFetchAt + 9_999);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1);
