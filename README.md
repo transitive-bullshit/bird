@@ -12,7 +12,7 @@ bird read https://x.com/transitive_bs/status/2106223134978498623
 bird help
 ```
 
-Credentials resolve from CLI flags, environment variables, then local Safari, Chrome/Brave, or Firefox cookies via Sweet Cookie. X calls are paced automatically: at least 500 milliseconds between requests and 10 seconds between searches, shared across invocations for the same session on this machine.
+Credentials resolve from CLI flags, environment variables, then local Safari, Chrome/Brave, or Firefox cookies via Sweet Cookie. X calls are paced automatically: at least 100 milliseconds between requests and 5 seconds between searches, shared across invocations for the same session on this machine.
 
 [CLI and library reference](docs/cli.md) · [Development](docs/development.md) · [Testing](docs/testing.md)
 

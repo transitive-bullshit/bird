@@ -63,62 +63,62 @@ describe('X request pacing', () => {
     return join(directory, file);
   }
 
-  it('allows the first call immediately and spaces concurrent calls by 500 milliseconds', async () => {
+  it('allows the first call immediately and spaces concurrent calls by 100 milliseconds', async () => {
     await limiter.run(READ_URL, request);
     const second = limiter.run(READ_URL, request);
     const third = limiter.run(READ_URL, request);
-    await advanceTo(START_TIME + 499);
+    await advanceTo(START_TIME + 99);
     expect(request).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1);
     await second;
-    await advanceTo(START_TIME + 999);
+    await advanceTo(START_TIME + 199);
     expect(request).toHaveBeenCalledTimes(2);
     await vi.advanceTimersByTimeAsync(1);
     await third;
-    expect(times).toEqual([START_TIME, START_TIME + 500, START_TIME + 1_000]);
+    expect(times).toEqual([START_TIME, START_TIME + 100, START_TIME + 200]);
   });
 
-  it('spaces every search by 10 seconds, including changed query IDs', async () => {
+  it('spaces every search by 5 seconds, including changed query IDs', async () => {
     await limiter.run(SEARCH_URL, request);
     const second = limiter.run(SEARCH_URL.replace('query-id', 'fallback-id'), request);
-    await advanceTo(START_TIME + 9_999);
+    await advanceTo(START_TIME + 4_999);
     expect(request).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1);
     await second;
-    expect(times).toEqual([START_TIME, START_TIME + 10_000]);
+    expect(times).toEqual([START_TIME, START_TIME + 5_000]);
   });
 
   it('allows a read between searches while retaining the search interval', async () => {
     await limiter.run(SEARCH_URL, request);
     const read = limiter.run(READ_URL, request);
-    await advanceTo(START_TIME + 500);
+    await advanceTo(START_TIME + 100);
     await read;
     const search = limiter.run(SEARCH_URL, request);
-    await advanceTo(START_TIME + 10_000);
+    await advanceTo(START_TIME + 5_000);
     await search;
-    expect(times).toEqual([START_TIME, START_TIME + 500, START_TIME + 10_000]);
+    expect(times).toEqual([START_TIME, START_TIME + 100, START_TIME + 5_000]);
   });
 
   it('shares persisted search pacing across separate limiter instances', async () => {
     await limiter.run(SEARCH_URL, request);
     const another = new XRequestLimiter(validCookies.authToken, directory);
     const next = another.run(SEARCH_URL, request);
-    await advanceTo(START_TIME + 9_999);
+    await advanceTo(START_TIME + 4_999);
     expect(request).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1);
     await next;
-    expect(times[1] - times[0]).toBe(10_000);
+    expect(times[1] - times[0]).toBe(5_000);
   });
 
   it('coordinates simultaneous instances through the file lock', async () => {
     const another = new XRequestLimiter(validCookies.authToken, directory);
     const both = Promise.all([limiter.run(SEARCH_URL, request), another.run(SEARCH_URL, request)]);
     await waitForIo(() => request.mock.calls.length === 1);
-    await advanceTo(times[0] + 9_999);
+    await advanceTo(times[0] + 4_999);
     expect(request).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1);
     await both;
-    expect(times[1] - times[0]).toBe(10_000);
+    expect(times[1] - times[0]).toBe(5_000);
   });
 
   it('keeps sessions independent and writes no raw credentials', async () => {
@@ -147,9 +147,9 @@ describe('X request pacing', () => {
   it('paces REST fallbacks and uploads as well as GraphQL', async () => {
     await limiter.run('https://upload.twitter.com/i/media/upload.json', request);
     const rest = limiter.run('https://api.x.com/1.1/account/verify_credentials.json', request);
-    await advanceTo(START_TIME + 500);
+    await advanceTo(START_TIME + 100);
     await rest;
-    expect(times).toEqual([START_TIME, START_TIME + 500]);
+    expect(times).toEqual([START_TIME, START_TIME + 100]);
   });
 
   it.each([
@@ -199,7 +199,7 @@ describe('X request pacing', () => {
     const state = JSON.parse(await readFile(file, 'utf8'));
     state.cooldownUntil = START_TIME + 60_000;
     await writeFile(file, JSON.stringify(state));
-    await vi.advanceTimersByTimeAsync(7_000);
+    await vi.advanceTimersByTimeAsync(2_000);
     await advanceTo(START_TIME + 59_999);
     expect(request).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1);
@@ -211,7 +211,7 @@ describe('X request pacing', () => {
     request.mockRejectedValueOnce(new Error('network failed'));
     await expect(limiter.run(SEARCH_URL, request)).rejects.toThrow('network failed');
     const next = limiter.run(SEARCH_URL, request);
-    await advanceTo(START_TIME + 10_000);
+    await advanceTo(START_TIME + 5_000);
     await next;
     expect(request).toHaveBeenCalledTimes(2);
   });
@@ -252,7 +252,7 @@ describe('X request pacing', () => {
     const client = new TwitterClient({ cookies: validCookies, timeoutMs: 5 });
     const result = client.search('from:example');
     await waitForIo(() => fetchMock.mock.calls.length === 1);
-    await advanceTo(firstFetchAt + 9_999);
+    await advanceTo(firstFetchAt + 4_999);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1);
     expect((await result).success).toBe(true);
@@ -304,7 +304,7 @@ describe('X request pacing', () => {
     vi.stubGlobal('fetch', fetchMock);
     const pending = new TwitterClient({ cookies: validCookies }).search('from:example', 2);
     await waitForIo(() => fetchMock.mock.calls.length === 1);
-    await advanceTo(firstFetchAt + 9_999);
+    await advanceTo(firstFetchAt + 4_999);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1);
     const result = await pending;

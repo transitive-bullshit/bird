@@ -236,7 +236,7 @@ Environment shortcuts:
 
 ## Request pacing
 
-X calls are spaced by at least 500 milliseconds, with 10 seconds between searches (including mentions, related news tweets, pagination, retries, and fallback query IDs). The same session shares pacing across clients and CLI invocations on this machine. Server cooldown headers extend the wait; a 429 with no usable reset hints starts a 15-minute cooldown. See [the request policy](development.md#request-policy) for details and state-file recovery.
+X calls are spaced by at least 100 milliseconds, with 5 seconds between searches (including mentions, related news tweets, pagination, retries, and fallback query IDs). The same session shares pacing across clients and CLI invocations on this machine. Server cooldown headers extend the wait; a 429 with no usable reset hints starts a 15-minute cooldown. See [the request policy](development.md#request-policy) for details and state-file recovery.
 
 ## Output
 

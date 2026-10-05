@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.1 — 2026-10-05
+
+### Changed
+- Reduced shared X request pacing to 100 milliseconds between requests and 5 seconds between searches.
+
 ## 0.7.0 — 2026-10-05
 
 ### Added

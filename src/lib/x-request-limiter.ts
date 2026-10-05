@@ -3,8 +3,8 @@ import { mkdir, open, readFile, rename, unlink, writeFile } from 'node:fs/promis
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-const REQUEST_INTERVAL_MS = 500;
-const SEARCH_INTERVAL_MS = 10_000;
+const REQUEST_INTERVAL_MS = 100;
+const SEARCH_INTERVAL_MS = 5_000;
 const DEFAULT_COOLDOWN_MS = 15 * 60_000;
 const RESET_GRACE_MS = 5_000;
 const LOCK_TIMEOUT_MS = 5_000;

@@ -20,7 +20,7 @@ Cookie extraction can return several Chromium stores. Select a complete auth/CSR
 
 ## Request policy
 
-The limiter spaces X requests by at least **500 milliseconds**, with at least **10 seconds between SearchTimeline requests**. Search covers `search`, `mentions`, and searches for related news tweets. Every page, fallback query ID, and retry consumes a slot. Page delays can add time but cannot reduce these minimums.
+The limiter spaces X requests by at least **100 milliseconds**, with at least **5 seconds between SearchTimeline requests**. Search covers `search`, `mentions`, and searches for related news tweets. Every page, fallback query ID, and retry consumes a slot. Page delays can add time but cannot reduce these minimums.
 
 Calls on one client are queued through response headers. Pacing is also shared across clients and processes with the same `auth_token` on this machine. Other tools, devices, and distinct sessions do not share this state; these intervals are our conservative policy, not a published X quota.
 

@@ -27,7 +27,7 @@ Notes:
 - Live tests are skipped unless `BIRD_LIVE=1` (set by `pnpm test:live`).
 - Search query is configurable via `BIRD_LIVE_SEARCH_QUERY`.
 - Command timeout is configurable via `BIRD_LIVE_TIMEOUT_MS` (ms).
-- Allow for pacing in the overall command timeout: each search page/fallback can add 10 seconds, and server cooldowns may be longer. `--timeout` covers an individual fetch after pacing, not the whole command.
+- Allow for pacing in the overall command timeout: each search page/fallback can add 5 seconds, and server cooldowns may be longer. `--timeout` covers an individual fetch after pacing, not the whole command.
 - Cookie extraction timeout is configurable via `BIRD_LIVE_COOKIE_TIMEOUT_MS` (ms).
 - Spawned CLI `NODE_ENV` defaults to `production` (override with `BIRD_LIVE_NODE_ENV`).
 - If you don't tweet, set `BIRD_LIVE_TWEET_ID` to a known tweet ID to use for `read/replies/thread`.
