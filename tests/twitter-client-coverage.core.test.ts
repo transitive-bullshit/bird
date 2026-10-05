@@ -70,6 +70,23 @@ describe('TwitterClient core coverage', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
+  it('preserves caller cancellation when adding a request timeout', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const mockFetch = vi.fn(async (_url: string, init?: RequestInit) => {
+      expect(init?.signal?.aborted).toBe(true);
+      return makeResponse();
+    });
+    global.fetch = mockFetch as unknown as typeof fetch;
+
+    const client = new TwitterClient({ cookies: validCookies, timeoutMs: 5 });
+    await (client as unknown as TwitterClientPrivate).fetchWithTimeout('https://example.com', {
+      method: 'GET',
+      signal: controller.signal,
+    });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
   it('returns a not found error when tweet data is missing', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(
       makeResponse({

@@ -40,7 +40,7 @@ export function withTweetDetails<TBase extends AbstractConstructor<TwitterClient
   Base: TBase,
 ): Mixin<TBase, TwitterClientTweetDetailMethods> {
   abstract class TwitterClientTweetDetails extends Base {
-    // biome-ignore lint/complexity/noUselessConstructor lint/suspicious/noExplicitAny: TS mixin constructor requirement.
+    // biome-ignore lint/suspicious/noExplicitAny: TS mixin constructor requirement.
     constructor(...args: any[]) {
       super(...args);
     }

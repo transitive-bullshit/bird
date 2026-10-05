@@ -10,7 +10,7 @@ export function withBookmarks<TBase extends AbstractConstructor<TwitterClientBas
   Base: TBase,
 ): Mixin<TBase, TwitterClientBookmarkMethods> {
   abstract class TwitterClientBookmarks extends Base {
-    // biome-ignore lint/complexity/noUselessConstructor lint/suspicious/noExplicitAny: TS mixin constructor requirement.
+    // biome-ignore lint/suspicious/noExplicitAny: TS mixin constructor requirement.
     constructor(...args: any[]) {
       super(...args);
     }

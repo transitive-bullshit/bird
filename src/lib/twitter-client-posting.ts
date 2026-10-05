@@ -12,7 +12,7 @@ export function withPosting<TBase extends AbstractConstructor<TwitterClientBase>
   Base: TBase,
 ): Mixin<TBase, TwitterClientPostingMethods> {
   abstract class TwitterClientPosting extends Base {
-    // biome-ignore lint/complexity/noUselessConstructor lint/suspicious/noExplicitAny: TS mixin constructor requirement.
+    // biome-ignore lint/suspicious/noExplicitAny: TS mixin constructor requirement.
     constructor(...args: any[]) {
       super(...args);
     }
@@ -248,7 +248,7 @@ export function withPosting<TBase extends AbstractConstructor<TwitterClientBase>
         }
 
         const tweetId =
-          typeof data.id_str === 'string' ? data.id_str : data.id !== undefined ? String(data.id) : undefined;
+          typeof data.id_str === 'string' ? data.id_str : data.id === undefined ? undefined : String(data.id);
 
         if (tweetId) {
           return { success: true, tweetId };

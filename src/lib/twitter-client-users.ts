@@ -32,7 +32,7 @@ export function withUsers<TBase extends AbstractConstructor<TwitterClientBase>>(
   Base: TBase,
 ): Mixin<TBase, TwitterClientUserMethods> {
   abstract class TwitterClientUsers extends Base {
-    // biome-ignore lint/complexity/noUselessConstructor lint/suspicious/noExplicitAny: TS mixin constructor requirement.
+    // biome-ignore lint/suspicious/noExplicitAny: TS mixin constructor requirement.
     constructor(...args: any[]) {
       super(...args);
     }

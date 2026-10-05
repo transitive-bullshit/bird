@@ -3,6 +3,8 @@
 ## Unit tests (default)
 - `pnpm test`
 
+Use `pnpm check` for the full local/CI gate (lint, production TypeScript build, mocked tests). The default suite makes no authenticated X calls. `tests/setup.ts` replaces the pacing module for ordinary fetch fixtures; limiter tests unmock it, use temporary state directories, and advance fake time to verify spacing and cooldowns. Keep the limiter active in live tests and CLI subprocesses.
+
 ## Live tests (hits Twitter/X)
 
 Runs the CLI against real Twitter/X GraphQL endpoints to verify read-only commands still work.
@@ -25,6 +27,7 @@ Notes:
 - Live tests are skipped unless `BIRD_LIVE=1` (set by `pnpm test:live`).
 - Search query is configurable via `BIRD_LIVE_SEARCH_QUERY`.
 - Command timeout is configurable via `BIRD_LIVE_TIMEOUT_MS` (ms).
+- Allow for pacing in the overall command timeout: each search page/fallback can add 10 seconds, and server cooldowns may be longer. `--timeout` covers an individual fetch after pacing, not the whole command.
 - Cookie extraction timeout is configurable via `BIRD_LIVE_COOKIE_TIMEOUT_MS` (ms).
 - Spawned CLI `NODE_ENV` defaults to `production` (override with `BIRD_LIVE_NODE_ENV`).
 - If you don't tweet, set `BIRD_LIVE_TWEET_ID` to a known tweet ID to use for `read/replies/thread`.

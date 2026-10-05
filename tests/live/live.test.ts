@@ -1,9 +1,9 @@
-import { spawn } from 'node:child_process';
+import { type ChildProcess, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-type RunResult = { exitCode: number; stdout: string; stderr: string; signal: NodeJS.Signals | null };
+type RunResult = { exitCode: number; stdout: string; stderr: string; signal: ChildProcess['signalCode'] };
 
 const LIVE = process.env.BIRD_LIVE === '1';
 

@@ -3,7 +3,7 @@
  * Delegates to @steipete/sweet-cookie for Safari/Chrome/Firefox reads.
  */
 
-import { getCookies } from '@steipete/sweet-cookie';
+import { type Cookie, getCookies } from '@steipete/sweet-cookie';
 
 export interface TwitterCookies {
   authToken: string | null;
@@ -23,6 +23,7 @@ const TWITTER_COOKIE_NAMES = ['auth_token', 'ct0'] as const;
 const TWITTER_URL = 'https://x.com/';
 const TWITTER_ORIGINS: string[] = ['https://x.com/', 'https://twitter.com/'];
 const DEFAULT_COOKIE_TIMEOUT_MS = 30_000;
+const LEADING_DOT_REGEX = /^\./;
 
 function normalizeValue(value: unknown): string | null {
   if (typeof value !== 'string') {
@@ -77,26 +78,28 @@ function labelForSource(source: CookieSource, profile?: string): string {
   return profile ? `Firefox profile "${profile}"` : 'Firefox default profile';
 }
 
-function pickCookieValue(
-  cookies: Array<{ name?: string; value?: string; domain?: string }>,
-  name: (typeof TWITTER_COOKIE_NAMES)[number],
-): string | null {
-  const matches = cookies.filter((c) => c?.name === name && typeof c.value === 'string');
-  if (matches.length === 0) {
-    return null;
+function pickCookiePair(cookies: Cookie[]): { authToken: string; ct0: string } | undefined {
+  const groups = new Map<string, { domain: string; authToken?: string; ct0?: string }>();
+  for (const cookie of cookies) {
+    const value = normalizeValue(cookie.value);
+    if (!value || (cookie.name !== 'auth_token' && cookie.name !== 'ct0')) {
+      continue;
+    }
+    const domain = (cookie.domain ?? '').toLowerCase().replace(LEADING_DOT_REGEX, '');
+    const key = JSON.stringify([domain, cookie.source?.browser, cookie.source?.profile, cookie.source?.storeId]);
+    const group = groups.get(key) ?? { domain };
+    const field = cookie.name === 'auth_token' ? 'authToken' : 'ct0';
+    group[field] ??= value;
+    groups.set(key, group);
   }
-
-  const preferred = matches.find((c) => (c.domain ?? '').endsWith('x.com'));
-  if (preferred?.value) {
-    return preferred.value;
+  const rank = (domain: string) => (domain === 'x.com' ? 0 : domain === 'twitter.com' ? 1 : 2);
+  const candidates = [...groups.values()].sort((a, b) => rank(a.domain) - rank(b.domain));
+  for (const { authToken, ct0 } of candidates) {
+    if (authToken && ct0) {
+      return { authToken, ct0 };
+    }
   }
-
-  const twitter = matches.find((c) => (c.domain ?? '').endsWith('twitter.com'));
-  if (twitter?.value) {
-    return twitter.value;
-  }
-
-  return matches[0]?.value ?? null;
+  return undefined;
 }
 
 async function readTwitterCookiesFromBrowser(options: {
@@ -120,14 +123,10 @@ async function readTwitterCookiesFromBrowser(options: {
   });
   warnings.push(...providerWarnings);
 
-  const authToken = pickCookieValue(cookies, 'auth_token');
-  const ct0 = pickCookieValue(cookies, 'ct0');
-  if (authToken) {
-    out.authToken = authToken;
-  }
-  if (ct0) {
-    out.ct0 = ct0;
-  }
+  // Sweet Cookie can return multiple Chromium stores; keep each session's pair together.
+  const pair = pickCookiePair(cookies);
+  out.authToken = pair?.authToken ?? null;
+  out.ct0 = pair?.ct0 ?? null;
 
   if (out.authToken && out.ct0) {
     out.cookieHeader = cookieHeader(out.authToken, out.ct0);

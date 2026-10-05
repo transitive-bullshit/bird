@@ -810,7 +810,7 @@ export function parseUsersFromInstructions(
           ? (rawUserResult.user as typeof rawUserResult)
           : rawUserResult;
 
-      if (!userResult || userResult.__typename !== 'User') {
+      if (userResult?.__typename !== 'User') {
         continue;
       }
 

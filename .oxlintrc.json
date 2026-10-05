@@ -1,0 +1,10 @@
+{
+  "overrides": [
+    {
+      "files": ["tests/**/*.ts"],
+      "rules": {
+        "vitest/require-mock-type-parameters": "off"
+      }
+    }
+  ]
+}

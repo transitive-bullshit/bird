@@ -1,8 +1,10 @@
 # Changelog
 
-## 0.7.0 — Unreleased
+## 0.7.0 — 2026-10-05
 
 ### Added
+- Account-scoped X request pacing shared across CLI invocations: 500 milliseconds between requests, 10 seconds between searches, and persistent server cooldowns.
+- Minimal agent guidance, a development code map, and an 80/20 audit follow-up list.
 - `list-timeline` now supports pagination (`--all`, `--max-pages`, `--cursor`) (#30) — thanks @zheli.
 - `home` command for the "For You" and "Following" home timelines (#31) — thanks @odysseus0.
 - Rich text output now shows article previews, quoted tweets, and media links (#32) — thanks @odysseus0.
@@ -14,9 +16,14 @@
 - `likes` now supports pagination (`--all`, `--max-pages`, `--cursor`) (#44) — thanks @jsholmes.
 
 ### Changed
+- Renamed this fork's npm package to `@fisch0920/bird`; the executable remains `bird`.
+- Updated all direct dependencies and CI actions. Sweet Cookie 0.4.4 replaces the local patch; Node.js 22.12+ is now required.
+- `pnpm check` runs lint, the production build, and mocked tests locally and in CI. `pnpm dev` now runs the source CLI.
 - Library typing: `SearchResult` is now a discriminated union (so `error` only exists when `success: false`).
 
 ### Fixed
+- Browser auth and CSRF cookies stay within one domain, profile, and store when extracting multiple Chromium sessions.
+- Bookmark requests return 429s without an immediate retry, and request timeouts preserve caller cancellation.
 - macOS cookie extraction now supports Brave keychain storage (#40) — thanks @gakonst.
 - Terminal hyperlinks now sanitize control characters before emitting OSC 8 sequences (#29) — thanks @mafulafunk.
 - Following/followers pagination now guards repeat cursors and standardizes JSON output (#28) — thanks @malpern.

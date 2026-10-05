@@ -30,7 +30,7 @@ export function withTimelines<TBase extends AbstractConstructor<TwitterClientBas
   Base: TBase,
 ): Mixin<TBase, TwitterClientTimelineMethods> {
   abstract class TwitterClientTimelines extends Base {
-    // biome-ignore lint/complexity/noUselessConstructor lint/suspicious/noExplicitAny: TS mixin constructor requirement.
+    // biome-ignore lint/suspicious/noExplicitAny: TS mixin constructor requirement.
     constructor(...args: any[]) {
       super(...args);
     }
@@ -606,7 +606,7 @@ export function withTimelines<TBase extends AbstractConstructor<TwitterClientBas
     private async fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
       const maxRetries = 2;
       const baseDelayMs = 500;
-      const retryable = new Set([429, 500, 502, 503, 504]);
+      const retryable = new Set([500, 502, 503, 504]);
 
       for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
         const response = await this.fetchWithTimeout(url, init);

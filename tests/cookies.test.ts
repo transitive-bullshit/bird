@@ -1,6 +1,7 @@
+import type { Cookie } from '@steipete/sweet-cookie';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-type SweetCookieResult = { cookies: Array<{ name: string; value: string; domain?: string }>; warnings: string[] };
+type SweetCookieResult = { cookies: Cookie[]; warnings: string[] };
 
 const sweet = vi.hoisted(() => ({
   results: new Map<string, SweetCookieResult>(),
@@ -322,6 +323,49 @@ describe('cookies', () => {
   });
 
   describe('extractCookiesFromChrome', () => {
+    it('selects a complete session instead of mixing Chrome and Brave stores', async () => {
+      sweet.results.set('chrome', {
+        cookies: [
+          {
+            name: 'auth_token',
+            value: 'incomplete_chrome',
+            domain: 'x.com',
+            source: { browser: 'chrome', storeId: 'chrome' },
+          },
+          { name: 'auth_token', value: 'brave_auth', domain: 'x.com', source: { browser: 'chrome', storeId: 'brave' } },
+          { name: 'ct0', value: 'brave_ct0', domain: 'x.com', source: { browser: 'chrome', storeId: 'brave' } },
+        ],
+        warnings: [],
+      });
+      const { extractCookiesFromChrome } = await import('../src/lib/cookies.js');
+      const result = await extractCookiesFromChrome();
+      expect(result.cookies.cookieHeader).toBe('auth_token=brave_auth; ct0=brave_ct0');
+    });
+
+    it.each(['domain', 'profile', 'store'])('rejects cookie pairs split across %s boundaries', async (boundary) => {
+      const source = { browser: 'chrome' as const, profile: 'Default', storeId: 'chrome' };
+      sweet.results.set('chrome', {
+        cookies: [
+          { name: 'auth_token', value: 'auth', domain: 'x.com', source },
+          {
+            name: 'ct0',
+            value: 'csrf',
+            domain: boundary === 'domain' ? 'twitter.com' : 'x.com',
+            source: {
+              ...source,
+              profile: boundary === 'profile' ? 'Profile 2' : source.profile,
+              storeId: boundary === 'store' ? 'brave' : source.storeId,
+            },
+          },
+        ],
+        warnings: [],
+      });
+      const { extractCookiesFromChrome } = await import('../src/lib/cookies.js');
+      const result = await extractCookiesFromChrome();
+      expect(result.cookies.cookieHeader).toBeNull();
+      expect(result.warnings).not.toHaveLength(0);
+    });
+
     it('returns cookies when Chrome yields values', async () => {
       sweet.results.set('chrome', {
         cookies: [

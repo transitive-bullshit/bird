@@ -10,7 +10,7 @@ export function withMedia<TBase extends AbstractConstructor<TwitterClientBase>>(
   Base: TBase,
 ): Mixin<TBase, TwitterClientMediaMethods> {
   abstract class TwitterClientMedia extends Base {
-    // biome-ignore lint/complexity/noUselessConstructor lint/suspicious/noExplicitAny: TS mixin constructor requirement.
+    // biome-ignore lint/suspicious/noExplicitAny: TS mixin constructor requirement.
     constructor(...args: any[]) {
       super(...args);
     }
@@ -57,9 +57,9 @@ export function withMedia<TBase extends AbstractConstructor<TwitterClientBase>>(
         const mediaId =
           typeof initBody.media_id_string === 'string'
             ? initBody.media_id_string
-            : initBody.media_id !== undefined
-              ? String(initBody.media_id)
-              : undefined;
+            : initBody.media_id === undefined
+              ? undefined
+              : String(initBody.media_id);
         if (!mediaId) {
           return { success: false, error: 'Media upload INIT did not return media_id' };
         }

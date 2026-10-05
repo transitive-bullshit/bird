@@ -486,6 +486,13 @@ describe('TwitterClient bookmarks', () => {
     global.fetch = mockFetch as unknown as typeof fetch;
   });
 
+  it('returns a 429 without immediately retrying bookmarks', async () => {
+    mockFetch.mockResolvedValue(new Response('rate limited', { status: 429 }));
+    const result = await new TwitterClient({ cookies: validCookies }).getBookmarks();
+    expect(result).toMatchObject({ success: false, error: expect.stringContaining('HTTP 429') });
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
   it('fetches bookmarks and parses tweet results', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,

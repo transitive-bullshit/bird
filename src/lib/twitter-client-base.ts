@@ -3,6 +3,7 @@ import { runtimeQueryIds } from './runtime-query-ids.js';
 import { type OperationName, QUERY_IDS, TARGET_QUERY_ID_OPERATIONS } from './twitter-client-constants.js';
 import type { CurrentUserResult, TwitterClientOptions } from './twitter-client-types.js';
 import { normalizeQuoteDepth } from './twitter-client-utils.js';
+import { XRequestLimiter } from './x-request-limiter.js';
 
 // biome-ignore lint/suspicious/noExplicitAny: TS mixin base constructor requirement.
 export type Constructor<T = object> = new (...args: any[]) => T;
@@ -22,6 +23,7 @@ export abstract class TwitterClientBase {
   protected clientUuid: string;
   protected clientDeviceId: string;
   protected clientUserId?: string;
+  private readonly requestLimiter: XRequestLimiter;
 
   constructor(options: TwitterClientOptions) {
     if (!options.cookies.authToken || !options.cookies.ct0) {
@@ -37,6 +39,7 @@ export abstract class TwitterClientBase {
     this.quoteDepth = normalizeQuoteDepth(options.quoteDepth);
     this.clientUuid = randomUUID();
     this.clientDeviceId = randomUUID();
+    this.requestLimiter = new XRequestLimiter(this.authToken);
   }
 
   protected abstract getCurrentUser(): Promise<CurrentUserResult>;
@@ -72,6 +75,10 @@ export abstract class TwitterClientBase {
   }
 
   protected async fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
+    return this.requestLimiter.run(url, () => this.fetchRequest(url, init));
+  }
+
+  private async fetchRequest(url: string, init: RequestInit): Promise<Response> {
     if (!this.timeoutMs || this.timeoutMs <= 0) {
       return fetch(url, init);
     }
@@ -79,7 +86,8 @@ export abstract class TwitterClientBase {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
-      return await fetch(url, { ...init, signal: controller.signal });
+      const signal = init.signal ? AbortSignal.any([init.signal, controller.signal]) : controller.signal;
+      return await fetch(url, { ...init, signal });
     } finally {
       clearTimeout(timeoutId);
     }

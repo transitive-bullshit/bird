@@ -1,59 +1,11 @@
 # Releasing bird
 
-Target destinations:
-- npm: `@steipete/bird`
-- Homebrew: tap formula in `steipete/homebrew-tap` (e.g., `bird.rb`)
+This fork publishes as `@fisch0920/bird` from `transitive-bullshit/bird`. The `bird` executable name is unchanged. The upstream Homebrew tap does not distribute this fork.
 
-## Checklist (npm + GitHub)
-1) Version bump
-   - Update `package.json` `version` (semver, e.g., `0.5.0`).
-   - Update `CHANGELOG.md` and tag the release section.
+1. Update the version and `CHANGELOG.md`.
+2. Run `pnpm install --frozen-lockfile` and `pnpm check`.
+3. Run `npm pack --dry-run`. Check that the package includes the CLI, declarations, bundled query IDs/features, and linked reference docs.
+4. Once publishing is requested, verify `npm whoami` and publish with `npm publish` (`publishConfig.access` is `public`). Verify the version with `npm view @fisch0920/bird version`, then run `npx -y @fisch0920/bird@<version> --help`.
+5. When tagging/releasing is requested, tag `v<version>`, push the tag, and create the GitHub release with changelog notes.
 
-2) Clean build & tests
-   - `pnpm install`
-   - `pnpm test`
-   - `pnpm run build`
-
-3) Publish to npm (scoped)
-   - Ensure you are logged in (`npm whoami`).
-   - `npm publish --access public` (from repo root). Package name is `@steipete/bird`.
-   - Verify:
-     - `npm view @steipete/bird version`
-     - `npx -y @steipete/bird@<version> --help`
-
-4) Git tag & GitHub release
-   - `git tag v<version> && git push origin v<version>`
-   - Create GitHub release from the tag. Include changelog notes and attach optional binary (see below).
-
-## Optional: attach compiled binary
-If you want a single-file binary for Homebrew/GitHub assets:
-- Build: `pnpm run binary` (uses Bun to produce `./bird`).
-- Upload `bird` to the GitHub release and use it for the Homebrew tarball.
-
-## Homebrew tap update (steipete/homebrew-tap)
-1) Package the binary
-   - From repo root: `tar -czf bird-macos-universal-v<version>.tar.gz bird`
-   - Compute SHA: `shasum -a 256 bird-macos-universal-v<version>.tar.gz`
-
-2) Update formula in tap repo
-   - File: `homebrew-tap/bird.rb` (create if absent). Model it after `poltergeist.rb`.
-   - Fields to update:
-     - `url "https://github.com/steipete/bird/releases/download/v<version>/bird-macos-universal-v<version>.tar.gz"`
-     - `sha256 "<calculated_sha>"`
-     - `version "<version>"`
-   - Install block: `bin.install "bird"`
-   - `test do`: minimal `assert_match "<version>", shell_output("#{bin}/bird --version")`
-
-3) Push tap changes
-   - `git add bird.rb && git commit -m "bird 0.1.0" && git push`
-
-## Release order suggestion
-1) Merge to `main` and tag.
-2) Publish npm.
-3) Build binary, upload to GitHub release.
-4) Update Homebrew tap with new URL/SHA.
-
-## Notes
-- Scoped npm name (`@steipete/bird`) requires `--access public` on first publish.
-- Homebrew formula assumes macOS universal binary; adjust URL/name if you ship per-arch.
-- Config defaults (JSON5) and Safari/Chrome/Firefox cookie selection are documented in `README.md` — keep that in sync for each release.
+For an optional standalone binary, run `pnpm build:binary` with Bun and attach `./bird` to the release. Build on each target platform; a local binary build does not produce a macOS universal binary.
